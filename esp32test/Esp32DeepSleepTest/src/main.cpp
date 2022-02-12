@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
+#include "menu_menu.h"
 
 #define LED_STATUS 32
 #define BUZZER 27
@@ -28,6 +29,8 @@ void setup()
 {
 
   Serial.begin(115200);
+
+  setupMenu();  
   pinMode(ONE_WIRE, INPUT);
 
   pinMode(M1_S1, INPUT);
@@ -64,10 +67,7 @@ void setup()
 
 void loop()
 {
-  delay(500);
-  digitalWrite(BUZZER, HIGH);
-delay(500);
-  digitalWrite(BUZZER, LOW);
+  taskManager.runLoop();
 
   int pwmin = pulseIn(M1_S1, HIGH, 200000);
   int pwm_clean = constrain(pwmin, 1000, 2000);
@@ -75,6 +75,5 @@ delay(500);
   Serial.println(out_duty_cycle);
   //ledcWrite(M1_A_CHANNEL, out_duty_cycle);
   //digitalWrite(M1_A_LO, HIGH);
-  ledcWrite(BUZZER , 128);
   delay(100);
 }
