@@ -54,12 +54,12 @@ typedef struct rmt_rc_channel
  */
 static const rmt_rc_channel rc_channels[axis_count] = {
   {
-    RMT_CHANNEL_0,
+    RMT_CHANNEL_1,
     GPIO_NUM_14,
   }
   ,
   {
-    RMT_CHANNEL_1,
+    RMT_CHANNEL_2,
     GPIO_NUM_12,
   } /*,
   {
@@ -90,7 +90,7 @@ static const uint8_t rmt_filter_threshold = 250;
 /*
  * @brief RC receiver usually sends 1ms = 1000us on the low end
  */
-static const uint16_t rc_receive_min = 1000;
+static const uint16_t rc_receive_min = 900;
 
 /*
  * @brief RC receiver usually sends 1.5ms = 1500us as center position
@@ -100,7 +100,7 @@ static const uint16_t rc_receive_mid = 1500;
 /*
  * @brief RC receiver usually sends 2ms = 2000us on the high end
  */
-static const uint16_t rc_receive_max = 2000;
+static const uint16_t rc_receive_max = 2100;
 
 /*
  * @brief FreeRTOS task which reads servo control signals sent by radio
