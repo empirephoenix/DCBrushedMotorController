@@ -22,7 +22,20 @@
 #define M2_B_LO 26
 #define M2_B_HI 25
 
-#define deadzone 50
+#define deadzoneMinCH1 1470
+#define deadzoneMaxCH1 1530
+#define minCH1 950
+#define maxCH1 2050
+
+
+#define deadzoneMinCH2 1480
+#define deadzoneMaxCH2 1680
+#define minCH2 1050
+#define maxCH2 2150
+
+
+#define turningMod 1
+
 
 #define FOREACH_INPUT(INPUT) \
   INPUT(NONE)                \
@@ -52,6 +65,7 @@ long m2_last = 0;
 // Configure RMT peripheral for each RC channel
 RingbufHandle_t ringbuffers[axis_count];
 
+int mode = 0;
 
 void check(bool value, char *output)
 {
@@ -60,7 +74,6 @@ void check(bool value, char *output)
     printf(output);
   }
 }
-
 
 void setup()
 {
@@ -72,7 +85,7 @@ void setup()
   pinMode(M1_S1, INPUT);
   pinMode(M1_S2, INPUT);
 
-  pinMode(M2_S1, INPUT);
+  pinMode(M2_S1, INPUT_PULLUP);
   pinMode(M2_S2, INPUT);
 
   pinMode(BUZZER, OUTPUT);
@@ -85,6 +98,9 @@ void setup()
   pinMode(M2_A_HI, OUTPUT);
   pinMode(M2_B_LO, OUTPUT);
   pinMode(M2_B_HI, OUTPUT);
+
+  yield();
+  mode = digitalRead(M2_S1);
 
   pixels.begin();
   pixels.setPixelColor(0, pixels.Color(0, 10, 0));
@@ -140,6 +156,11 @@ void setup()
 
   pixels.setPixelColor(0, pixels.Color(0, 0, 100));
   pixels.show();
+}
+
+float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 void joy_rmt_rc_read_task()
@@ -201,14 +222,14 @@ int waitforNeutral()
 
   float m1v = m1.getAverage();
   float m2v = m2.getAverage();
-  
+
   int ok = 0;
-  if (m1v > rc_receive_mid - deadzone && m1v < rc_receive_mid + deadzone)
+  if (m1v > deadzoneMinCH1 && m1v < deadzoneMaxCH1)
   {
     Serial.println("Channel 1 neutral");
     ok++;
   }
-  if (m2v > rc_receive_mid - deadzone && m2v < rc_receive_mid + deadzone)
+  if (m2v > deadzoneMinCH2 && m2v < deadzoneMaxCH2)
   {
     Serial.println("Channel 2 neutral");
     ok++;
@@ -219,7 +240,7 @@ int waitforNeutral()
   Serial.print(" ");
   Serial.print(m2v);
   Serial.println(ok);
-  
+
   if (ok == 0)
   {
     pixels.setPixelColor(0, pixels.Color(200, 0, 0));
@@ -233,34 +254,25 @@ int waitforNeutral()
   if (ok == 2)
   {
     pixels.setPixelColor(0, pixels.Color(0, 25, 0));
+    int buzzerDelay = 50+mode*200;
     digitalWrite(BUZZER, HIGH);
-    delay(50);
+    delay(buzzerDelay);
     digitalWrite(BUZZER, LOW);
-    delay(50);
+    delay(buzzerDelay);
     digitalWrite(BUZZER, HIGH);
-    delay(50);
+    delay(buzzerDelay);
     digitalWrite(BUZZER, LOW);
     return 1;
   }
-  
+
   return 0;
 }
 
-float handleMotor(int motor, float duration, int high_channel_a_ledc, int low_pin_a, int high_channel_b_ledc, int low_pin_b)
+float handleMotor(int motor, float ratio, int high_channel_a_ledc, int low_pin_a, int high_channel_b_ledc, int low_pin_b)
 {
-  if (isnan(duration))
+  if (ratio > 0)
   {
-    // freewheel active
-    return 0;
-  }
-  float cleanDuration = constrain(duration, 1000, 2000);
-  if (cleanDuration > 1450 && cleanDuration < 1550)
-  {
-    return 0;
-  }
-  if (cleanDuration > 1500)
-  {
-    int forward = map(cleanDuration, 1550, 2000, 0, 255);
+    int forward = mapfloat(ratio, 0, 1, 0, 255);
     Serial.print(motor);
     Serial.print("+");
     Serial.println(forward);
@@ -273,7 +285,7 @@ float handleMotor(int motor, float duration, int high_channel_a_ledc, int low_pi
   }
   else
   {
-    int reverse = map(cleanDuration, 1000, 1450, 255, 0);
+    int reverse = mapfloat(ratio, -1, 0, 255, 0);
     Serial.print(motor);
     Serial.print("-");
     Serial.println(reverse);
@@ -296,30 +308,70 @@ void loop()
     return;
   }
 
-
-
   long curTime = millis();
   if (curTime - m1_last > 200)
   {
     state = 3;
     m1.clear();
+    m1.add(1500);
   }
   if (curTime - m2_last > 200)
   {
     state = 3;
     m2.clear();
+    m2.add(1500);
   }
 
-  float power1 = handleMotor(1, m1.getAverage(), M1_A_CHANNEL, M1_A_LO, M1_B_CHANNEL, M1_B_LO);
-  float power2 = handleMotor(2,m2.getAverage(), M2_A_CHANNEL, M2_A_LO, M2_B_CHANNEL, M2_B_LO);
+  float m1Raw = m1.getAverage();
+  float m2Raw = m2.getAverage();
+
+  float ch1 = 0;
+  float ch2 = 0;
+  if (m1Raw < deadzoneMinCH1 || m1Raw > deadzoneMaxCH1)
+  {
+    ch1 = mapfloat(m1Raw, minCH1, maxCH1, -1, 1);
+    ch1 = constrain(ch1, -1, 1);
+  }
+  if (m2Raw < deadzoneMinCH2 || m2Raw > deadzoneMaxCH2)
+  {
+    ch2 = mapfloat(m2Raw, minCH2, maxCH2, -1, 1);
+    ch2 = constrain(ch2, -1, 1);
+  }
+    
+
+  float power1 = 0;
+  float power2 = 0;
+  if (mode == 0)
+  {
+    power1 = handleMotor(1, ch1, M1_A_CHANNEL, M1_A_LO, M1_B_CHANNEL, M1_B_LO);
+    power2 = handleMotor(2, ch2, M2_A_CHANNEL, M2_A_LO, M2_B_CHANNEL, M2_B_LO);
+  }
+  else if(mode == 1)
+  {
+    float brake = 1-abs(ch2);
+    float brakeFactor = brake * turningMod + (1 - turningMod);
+
+    float left = ch1;
+    float right = ch1;
+    if (ch2 < 0)
+    {
+      left = left * brakeFactor;
+    }
+    else
+    {
+      right = right * brakeFactor;
+    }
+    power1 = handleMotor(1, left, M1_A_CHANNEL, M1_A_LO, M1_B_CHANNEL, M1_B_LO);
+    power2 = handleMotor(2, right, M2_A_CHANNEL, M2_A_LO, M2_B_CHANNEL, M2_B_LO);
+  }
 
   pixels.setPixelColor(0, pixels.Color(0, power1, power2));
   if (state == 3)
   {
     digitalWrite(BUZZER, HIGH);
-    pixels.setPixelColor(0, pixels.Color(255, 0,0));
+    pixels.setPixelColor(0, pixels.Color(255, 0, 0));
     pixels.show();
   }
-  
+
   pixels.show();
 }
