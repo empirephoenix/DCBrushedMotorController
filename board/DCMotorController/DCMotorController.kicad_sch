@@ -5752,7 +5752,7 @@
   (symbol (lib_id "Device:R") (at 339.09 125.73 90) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 0a83d85f-0555-46a5-9d87-de66786a4954)
-    (property "Reference" "R?" (id 0) (at 337.9216 123.952 0)
+    (property "Reference" "R19" (id 0) (at 337.9216 123.952 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "1k" (id 1) (at 340.233 123.952 0)
@@ -6014,7 +6014,7 @@
   (symbol (lib_id "Device:C") (at 330.2 238.76 90) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 2d32893f-12de-4032-bc8a-a3a09e8673ca)
-    (property "Reference" "C?" (id 0) (at 329.0316 235.839 0)
+    (property "Reference" "C15" (id 0) (at 329.0316 235.839 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "100nF" (id 1) (at 331.343 235.839 0)
@@ -6608,7 +6608,7 @@
   (symbol (lib_id "Device:R") (at 337.82 236.22 90) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid 8bdfec95-3190-4dff-9c58-776b290ebfa4)
-    (property "Reference" "R?" (id 0) (at 336.6516 234.442 0)
+    (property "Reference" "R12" (id 0) (at 336.6516 234.442 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "1k" (id 1) (at 338.963 234.442 0)
@@ -6708,7 +6708,7 @@
   (symbol (lib_id "Device:C") (at 331.47 128.27 90) (unit 1)
     (in_bom yes) (on_board yes)
     (uuid a648105e-3142-454a-80fd-a7386ac44203)
-    (property "Reference" "C?" (id 0) (at 330.3016 125.349 0)
+    (property "Reference" "C16" (id 0) (at 330.3016 125.349 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "100nF" (id 1) (at 332.613 125.349 0)
@@ -7257,6 +7257,12 @@
     (path "/d7c5d036-811d-4367-b4d9-57b0fcec989d"
       (reference "C14") (unit 1) (value "10uF") (footprint "Capacitor_SMD:C_1206_3216Metric")
     )
+    (path "/2d32893f-12de-4032-bc8a-a3a09e8673ca"
+      (reference "C15") (unit 1) (value "100nF") (footprint "Capacitor_SMD:C_0603_1608Metric")
+    )
+    (path "/a648105e-3142-454a-80fd-a7386ac44203"
+      (reference "C16") (unit 1) (value "100nF") (footprint "Capacitor_SMD:C_0603_1608Metric")
+    )
     (path "/00000000-0000-0000-0000-000061ce86a1"
       (reference "C17") (unit 1) (value "22uF") (footprint "Capacitor_SMD:C_0603_1608Metric")
     )
@@ -7316,12 +7322,6 @@
     )
     (path "/5ede95ea-b2c7-47c8-b4e4-f285910da5fb"
       (reference "C43") (unit 1) (value "1500uF") (footprint "Capacitor_THT:CP_Radial_D12.5mm_P5.00mm")
-    )
-    (path "/2d32893f-12de-4032-bc8a-a3a09e8673ca"
-      (reference "C?") (unit 1) (value "100nF") (footprint "Capacitor_SMD:C_0603_1608Metric")
-    )
-    (path "/a648105e-3142-454a-80fd-a7386ac44203"
-      (reference "C?") (unit 1) (value "100nF") (footprint "Capacitor_SMD:C_0603_1608Metric")
     )
     (path "/3ff7dd96-621c-4a88-987a-6befb4074700"
       (reference "D1") (unit 1) (value "US1A") (footprint "Diode_SMD:D_SMA")
@@ -7494,6 +7494,9 @@
     (path "/25cd43ac-fc7f-43f9-b2a5-fb3464325031"
       (reference "R11") (unit 1) (value "15") (footprint "Resistor_SMD:R_0603_1608Metric")
     )
+    (path "/8bdfec95-3190-4dff-9c58-776b290ebfa4"
+      (reference "R12") (unit 1) (value "1k") (footprint "Resistor_SMD:R_0603_1608Metric")
+    )
     (path "/00000000-0000-0000-0000-000060983db3"
       (reference "R13") (unit 1) (value "1k") (footprint "Resistor_SMD:R_0603_1608Metric")
     )
@@ -7512,6 +7515,9 @@
     (path "/df914a73-3e24-469e-9949-34d8f15b09ab"
       (reference "R18") (unit 1) (value "82k") (footprint "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder")
     )
+    (path "/0a83d85f-0555-46a5-9d87-de66786a4954"
+      (reference "R19") (unit 1) (value "1k") (footprint "Resistor_SMD:R_0603_1608Metric")
+    )
     (path "/e56fb342-8e86-43b1-a6c4-bec8e7244baa"
       (reference "R20") (unit 1) (value "82k") (footprint "Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder")
     )
@@ -7529,12 +7535,6 @@
     )
     (path "/409b1d66-16f6-41a1-9aed-90c6b1c7c46b"
       (reference "R26") (unit 1) (value "10k") (footprint "Resistor_SMD:R_0603_1608Metric")
-    )
-    (path "/0a83d85f-0555-46a5-9d87-de66786a4954"
-      (reference "R?") (unit 1) (value "1k") (footprint "Resistor_SMD:R_0603_1608Metric")
-    )
-    (path "/8bdfec95-3190-4dff-9c58-776b290ebfa4"
-      (reference "R?") (unit 1) (value "1k") (footprint "Resistor_SMD:R_0603_1608Metric")
     )
     (path "/00000000-0000-0000-0000-0000603df238"
       (reference "Reset1") (unit 1) (value "SW_Push") (footprint "Button_Switch_SMD:SW_SPST_CK_RS282G05A3")
