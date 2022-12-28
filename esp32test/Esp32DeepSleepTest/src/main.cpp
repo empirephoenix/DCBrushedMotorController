@@ -7,6 +7,9 @@
 #define BUZZER 27
 #define ONE_WIRE 4
 
+#define M1_SENSE 34
+#define M2_SENSE 35
+
 #define M1_S1 14
 #define M1_S2 12
 #define M2_S1 13
@@ -28,10 +31,10 @@
 #define maxCH1 2050
 
 
-#define deadzoneMinCH2 1480
-#define deadzoneMaxCH2 1680
-#define minCH2 1050
-#define maxCH2 2150
+#define deadzoneMinCH2 1470
+#define deadzoneMaxCH2 1530
+#define minCH2 950
+#define maxCH2 2050
 
 
 #define turningMod 1
@@ -100,7 +103,7 @@ void setup()
   pinMode(M2_B_HI, OUTPUT);
 
   yield();
-  mode = digitalRead(M2_S1);
+  mode = 0; //digitalRead(M2_S2);
 
   pixels.begin();
   pixels.setPixelColor(0, pixels.Color(0, 10, 0));
@@ -273,9 +276,6 @@ float handleMotor(int motor, float ratio, int high_channel_a_ledc, int low_pin_a
   if (ratio > 0)
   {
     int forward = mapfloat(ratio, 0, 1, 0, 255);
-    Serial.print(motor);
-    Serial.print("+");
-    Serial.println(forward);
     digitalWrite(low_pin_a, LOW);
     digitalWrite(low_pin_b, HIGH);
     ledcWrite(high_channel_a_ledc, forward);
@@ -286,9 +286,6 @@ float handleMotor(int motor, float ratio, int high_channel_a_ledc, int low_pin_a
   else
   {
     int reverse = mapfloat(ratio, -1, 0, 255, 0);
-    Serial.print(motor);
-    Serial.print("-");
-    Serial.println(reverse);
     digitalWrite(low_pin_a, HIGH);
     digitalWrite(low_pin_b, LOW);
     ledcWrite(high_channel_a_ledc, 0);
@@ -300,7 +297,6 @@ float handleMotor(int motor, float ratio, int high_channel_a_ledc, int low_pin_a
 int state = 0;
 void loop()
 {
-  Serial.println("loop");
   joy_rmt_rc_read_task();
   if (state == 0)
   {
@@ -338,7 +334,7 @@ void loop()
     ch2 = constrain(ch2, -1, 1);
   }
     
-
+  
   float power1 = 0;
   float power2 = 0;
   if (mode == 0)
@@ -364,6 +360,16 @@ void loop()
     power1 = handleMotor(1, left, M1_A_CHANNEL, M1_A_LO, M1_B_CHANNEL, M1_B_LO);
     power2 = handleMotor(2, right, M2_A_CHANNEL, M2_A_LO, M2_B_CHANNEL, M2_B_LO);
   }
+
+  Serial.print("power1 ");
+  Serial.print(power1);
+  Serial.print(" mv1:");
+  Serial.print(analogReadMilliVolts(M1_SENSE));
+  Serial.print(" power2 ");
+  Serial.print(power2);
+  Serial.print(" mv2:");
+  Serial.print(analogReadMilliVolts(M2_SENSE));
+  Serial.println();
 
   pixels.setPixelColor(0, pixels.Color(0, power1, power2));
   if (state == 3)

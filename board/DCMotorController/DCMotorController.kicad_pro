@@ -57,10 +57,10 @@
       ],
       "drc_exclusions": [
         "courtyards_overlap|113024999|96224999|48bc7da3-a49b-4c38-aae1-82a5957c5f19|00000000-0000-0000-0000-000061ca3f67",
+        "courtyards_overlap|115378270|27159317|8293e6dc-5dc5-4268-84a6-ab71dad1eaa4|e7c08303-2412-4493-b6e3-0fefa0f7e449",
         "courtyards_overlap|75596019|64270001|dea8b5eb-afff-4dce-9baf-eb1c241d6459|00000000-0000-0000-0000-000061cad08a",
-        "courtyards_overlap|83399349|72040001|00000000-0000-0000-0000-000061cad08a|03d9278f-e0fe-478d-a80e-5d6770784596",
-        "silk_over_copper|48880000|20000000|bb5ee520-26da-4a63-af77-40f89b60f278|64794664-0fc6-4752-99ce-549baffabb90",
-        "silk_over_copper|67120000|20000000|bb5ee520-26da-4a63-af77-40f89b60f278|821bdd05-f675-4772-970c-b019eb60c144"
+        "courtyards_overlap|75608275|64250001|00000000-0000-0000-0000-000061cad08a|dea8b5eb-afff-4dce-9baf-eb1c241d6459",
+        "courtyards_overlap|83399349|72040001|00000000-0000-0000-0000-000061cad08a|03d9278f-e0fe-478d-a80e-5d6770784596"
       ],
       "meta": {
         "filename": "board_design_settings.json",
@@ -92,8 +92,8 @@
         "padstack": "error",
         "pth_inside_courtyard": "ignore",
         "shorting_items": "error",
-        "silk_over_copper": "warning",
-        "silk_overlap": "warning",
+        "silk_over_copper": "ignore",
+        "silk_overlap": "ignore",
         "skew_out_of_range": "error",
         "through_hole_pad_without_hole": "error",
         "too_many_vias": "error",
