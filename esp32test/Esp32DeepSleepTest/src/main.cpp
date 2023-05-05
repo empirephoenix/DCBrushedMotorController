@@ -3,6 +3,10 @@
 #include "joy_rmt_rc.h"
 #include "RunningMedian.h"
 
+#define SHUNT_MOHM 100
+#define MAX_AVG_CURRENT 5000
+#define MAX_SPIKE_CURRENT 10000
+
 #define LED_STATUS 32
 #define BUZZER 27
 #define ONE_WIRE 4
@@ -36,8 +40,13 @@
 #define minCH2 950
 #define maxCH2 2050
 
+#define STATE_WAIT_NEUTRAL 0
+#define STATE_DEFAULT 1
+#define STATE_ERROR -1
 
-#define turningMod 1
+
+
+#define turningMod 0
 
 
 #define FOREACH_INPUT(INPUT) \
@@ -64,6 +73,7 @@ RunningMedian m1 = RunningMedian(50);
 RunningMedian m2 = RunningMedian(50);
 long m1_last = 0;
 long m2_last = 0;
+int state = STATE_WAIT_NEUTRAL;
 
 // Configure RMT peripheral for each RC channel
 RingbufHandle_t ringbuffers[axis_count];
@@ -294,47 +304,14 @@ float handleMotor(int motor, float ratio, int high_channel_a_ledc, int low_pin_a
   }
 }
 
-int state = 0;
-void loop()
-{
-  joy_rmt_rc_read_task();
-  if (state == 0)
-  {
-    state = waitforNeutral();
-    return;
+uint32_t calculateCurrentSpike(uint32_t current, float powerByte){
+  if(powerByte < 1){
+    return 0;
   }
+  return current * 255/powerByte;
+}
 
-  long curTime = millis();
-  if (curTime - m1_last > 200)
-  {
-    state = 3;
-    m1.clear();
-    m1.add(1500);
-  }
-  if (curTime - m2_last > 200)
-  {
-    state = 3;
-    m2.clear();
-    m2.add(1500);
-  }
-
-  float m1Raw = m1.getAverage();
-  float m2Raw = m2.getAverage();
-
-  float ch1 = 0;
-  float ch2 = 0;
-  if (m1Raw < deadzoneMinCH1 || m1Raw > deadzoneMaxCH1)
-  {
-    ch1 = mapfloat(m1Raw, minCH1, maxCH1, -1, 1);
-    ch1 = constrain(ch1, -1, 1);
-  }
-  if (m2Raw < deadzoneMinCH2 || m2Raw > deadzoneMaxCH2)
-  {
-    ch2 = mapfloat(m2Raw, minCH2, maxCH2, -1, 1);
-    ch2 = constrain(ch2, -1, 1);
-  }
-    
-  
+void defaultMode(float ch1, float ch2){
   float power1 = 0;
   float power2 = 0;
   if (mode == 0)
@@ -361,23 +338,102 @@ void loop()
     power2 = handleMotor(2, right, M2_A_CHANNEL, M2_A_LO, M2_B_CHANNEL, M2_B_LO);
   }
 
+  uint32_t cur1_ma = analogReadMilliVolts(M1_SENSE)*1000 /50 /SHUNT_MOHM;
+  uint32_t cur2_ma = analogReadMilliVolts(M2_SENSE)*1000 /50 /SHUNT_MOHM;
+  
+  uint32_t cur1_spike_ma = calculateCurrentSpike(cur1_ma, power1);
+  uint32_t cur2_spike_ma = calculateCurrentSpike(cur2_ma, power2);
+
+  if(cur1_ma > MAX_AVG_CURRENT){
+    state = STATE_ERROR;
+    Serial.print("M1 reached current limit average");
+    Serial.println(cur1_ma);
+    return;
+  }
+
+  if(cur2_ma > MAX_AVG_CURRENT){
+    state = STATE_ERROR;
+    Serial.print("M2 reached current limit average");
+    Serial.println(cur2_ma);
+    return;
+  }
+
+  if(cur1_spike_ma > MAX_SPIKE_CURRENT){
+    state = STATE_ERROR;
+    Serial.print("M1 reached current limit average");
+    Serial.println(cur1_spike_ma);
+    return;
+  }
+
+  if(cur2_spike_ma > MAX_SPIKE_CURRENT){
+    state = STATE_ERROR;
+    Serial.print("M2 reached current limit average");
+    Serial.println(cur2_spike_ma);
+    return;
+  }
+  pixels.setPixelColor(0, pixels.Color(0, power1, power2));
   Serial.print("power1 ");
   Serial.print(power1);
-  Serial.print(" mv1:");
-  Serial.print(analogReadMilliVolts(M1_SENSE));
+  Serial.print(" cur1Ma:");
+  Serial.print(cur1_ma);
+  Serial.print(" cur1Maspike:");
+  Serial.print(cur1_spike_ma);
   Serial.print(" power2 ");
   Serial.print(power2);
-  Serial.print(" mv2:");
-  Serial.print(analogReadMilliVolts(M2_SENSE));
+  Serial.print(" cur2Ma:");
+  Serial.print(cur2_ma);
+  Serial.print(" cur2Maspike:");
+  Serial.print(cur2_spike_ma);
   Serial.println();
+}
 
-  pixels.setPixelColor(0, pixels.Color(0, power1, power2));
-  if (state == 3)
+
+void loop()
+{
+  joy_rmt_rc_read_task();
+  if (state == STATE_WAIT_NEUTRAL)
   {
+    state = waitforNeutral();
+    return;
+  }
+
+  long curTime = millis();
+  if (curTime - m1_last > 200)
+  {
+    state = STATE_ERROR;
+  }
+  if (curTime - m2_last > 200)
+  {
+    state = STATE_ERROR;
+  }
+
+  float m1Raw = m1.getAverage();
+  float m2Raw = m2.getAverage();
+
+  float ch1 = 0;
+  float ch2 = 0;
+  if (m1Raw < deadzoneMinCH1 || m1Raw > deadzoneMaxCH1)
+  {
+    ch1 = mapfloat(m1Raw, minCH1, maxCH1, -1, 1);
+    ch1 = constrain(ch1, -1, 1);
+  }
+  if (m2Raw < deadzoneMinCH2 || m2Raw > deadzoneMaxCH2)
+  {
+    ch2 = mapfloat(m2Raw, minCH2, maxCH2, -1, 1);
+    ch2 = constrain(ch2, -1, 1);
+  }
+  
+  if(state == STATE_ERROR){
+    handleMotor(1, 0, M1_A_CHANNEL, M1_A_LO, M1_B_CHANNEL, M1_B_LO);
+    handleMotor(2, 0, M2_A_CHANNEL, M2_A_LO, M2_B_CHANNEL, M2_B_LO);
     digitalWrite(BUZZER, HIGH);
     pixels.setPixelColor(0, pixels.Color(255, 0, 0));
     pixels.show();
-  }
 
+    delay(100);
+  }
+  if(state == STATE_DEFAULT){
+    defaultMode(ch1, ch2);
+  }
   pixels.show();
 }
