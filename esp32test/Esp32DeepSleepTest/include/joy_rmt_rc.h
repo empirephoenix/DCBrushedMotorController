@@ -90,7 +90,7 @@ static const uint8_t rmt_filter_threshold = 250;
 /*
  * @brief RC receiver usually sends 1ms = 1000us on the low end
  */
-static const uint16_t rc_receive_min = 800;
+static const uint16_t rc_receive_min = 700;
 
 /*
  * @brief RC receiver usually sends 1.5ms = 1500us as center position
@@ -100,7 +100,7 @@ static const uint16_t rc_receive_mid = 1500;
 /*
  * @brief RC receiver usually sends 2ms = 2000us on the high end
  */
-static const uint16_t rc_receive_max = 2200;
+static const uint16_t rc_receive_max = 2300;
 
 /*
  * @brief FreeRTOS task which reads servo control signals sent by radio

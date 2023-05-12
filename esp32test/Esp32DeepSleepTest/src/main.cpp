@@ -37,8 +37,8 @@
 
 #define deadzoneMinCH2 1470
 #define deadzoneMaxCH2 1530
-#define minCH2 950
-#define maxCH2 2050
+#define minCH2 850
+#define maxCH2 2250
 
 #define STATE_WAIT_NEUTRAL 0
 #define STATE_DEFAULT 1
@@ -63,6 +63,10 @@ enum INPUT_MODE
 };
 
 Adafruit_NeoPixel pixels(1, LED_STATUS, NEO_GRB);
+
+float lastPower[2];
+float nullPassend[2];
+#define NULL_PASS_DELAY 500
 
 const int M1_A_CHANNEL = 0;
 const int M1_B_CHANNEL = 1;
@@ -90,7 +94,8 @@ void check(bool value, char *output)
 
 void setup()
 {
-
+  lastPower[0] = 0;
+  lastPower[1] = 0;
   Serial.begin(115200);
 
   pinMode(ONE_WIRE, INPUT);
@@ -283,9 +288,37 @@ int waitforNeutral()
 
 float handleMotor(int motor, float ratio, int high_channel_a_ledc, int low_pin_a, int high_channel_b_ledc, int low_pin_b)
 {
+  if(nullPassend[motor-1] > millis()){
+    return 0;
+  }
+
+  float oldPower = lastPower[motor-1];
+  lastPower[motor-1] = ratio;
+  Serial.print(oldPower);
+  Serial.print( " " );
+  Serial.println(ratio);
+  if(oldPower <= 0 && ratio > 0){
+    digitalWrite(low_pin_a, LOW);
+    digitalWrite(low_pin_b, LOW);
+    ledcWrite(high_channel_a_ledc, 0);
+    ledcWrite(high_channel_b_ledc, 0);
+    Serial.print("Null pass delay");
+    nullPassend[motor-1] = millis() + NULL_PASS_DELAY;
+    return 0;
+  }
+  if (oldPower >= 0 && ratio < 0){
+    digitalWrite(low_pin_a, LOW);
+    digitalWrite(low_pin_b, LOW);
+    ledcWrite(high_channel_a_ledc, 0);
+    ledcWrite(high_channel_b_ledc, 0);
+    Serial.println("Null pass delay");
+    nullPassend[motor-1] = millis() + NULL_PASS_DELAY;
+    return 0;
+  }
+
   if (ratio > 0)
   {
-    int forward = mapfloat(ratio, 0, 1, 0, 255);
+    int forward = mapfloat(ratio, 0, 1, 0, 254);
     digitalWrite(low_pin_a, LOW);
     digitalWrite(low_pin_b, HIGH);
     ledcWrite(high_channel_a_ledc, forward);
@@ -295,7 +328,7 @@ float handleMotor(int motor, float ratio, int high_channel_a_ledc, int low_pin_a
   }
   else
   {
-    int reverse = mapfloat(ratio, -1, 0, 255, 0);
+    int reverse = mapfloat(ratio, -1, 0, 254, 0);
     digitalWrite(low_pin_a, HIGH);
     digitalWrite(low_pin_b, LOW);
     ledcWrite(high_channel_a_ledc, 0);
