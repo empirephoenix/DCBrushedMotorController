@@ -38,7 +38,7 @@ SOFTWARE.
 
 #include "driver/rmt.h"
 
-#define axis_count 2
+#define axis_count 1
 
 /*
  * @brief Structure to hold RMT configuration information specific to a channel
@@ -57,11 +57,11 @@ static const rmt_rc_channel rc_channels[axis_count] = {
     RMT_CHANNEL_1,
     GPIO_NUM_14,
   }
-  ,
+  /*,
   {
     RMT_CHANNEL_2,
     GPIO_NUM_12,
-  } /*,
+  } ,
   {
     RMT_CHANNEL_2,
     GPIO_NUM_13,

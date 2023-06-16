@@ -3,10 +3,7 @@
 #include "joy_rmt_rc.h"
 #include "RunningMedian.h"
 
-#define SHUNT_MOHM 100
-#define MAX_AVG_CURRENT 5000
-#define MAX_SPIKE_CURRENT 10000
-
+// pin setup
 #define LED_STATUS 32
 #define BUZZER 27
 #define ONE_WIRE 4
@@ -29,25 +26,33 @@
 #define M2_B_LO 26
 #define M2_B_HI 25
 
-#define deadzoneMinCH1 1470
-#define deadzoneMaxCH1 1530
+
+#define freq 2000
+#define resolution 8
+
+// Configuration
+#define SHUNT_MOHM 2
+#define MAX_AVG_CURRENT 45000
+#define MAX_SPIKE_CURRENT 80000
+#define NULL_PASS_DELAY 1000
+
+#define mode 0
+#define turningMod 0
+
+#define deadzoneMinCH1 1400
+#define deadzoneMaxCH1 1600
 #define minCH1 950
 #define maxCH1 2050
 
-
-#define deadzoneMinCH2 1470
-#define deadzoneMaxCH2 1530
+#define deadzoneMinCH2 1400
+#define deadzoneMaxCH2 1600
 #define minCH2 850
 #define maxCH2 2250
 
+// constants
 #define STATE_WAIT_NEUTRAL 0
 #define STATE_DEFAULT 1
 #define STATE_ERROR -1
-
-
-
-#define turningMod 0
-
 
 #define FOREACH_INPUT(INPUT) \
   INPUT(NONE)                \
@@ -66,7 +71,6 @@ Adafruit_NeoPixel pixels(1, LED_STATUS, NEO_GRB);
 
 float lastPower[2];
 float nullPassend[2];
-#define NULL_PASS_DELAY 500
 
 const int M1_A_CHANNEL = 0;
 const int M1_B_CHANNEL = 1;
@@ -74,15 +78,13 @@ const int M2_A_CHANNEL = 2;
 const int M2_B_CHANNEL = 3;
 
 RunningMedian m1 = RunningMedian(50);
-RunningMedian m2 = RunningMedian(50);
+//RunningMedian m2 = RunningMedian(50);
 long m1_last = 0;
-long m2_last = 0;
+//long m2_last = 0;
 int state = STATE_WAIT_NEUTRAL;
 
 // Configure RMT peripheral for each RC channel
 RingbufHandle_t ringbuffers[axis_count];
-
-int mode = 0;
 
 void check(bool value, char *output)
 {
@@ -118,8 +120,7 @@ void setup()
   pinMode(M2_B_HI, OUTPUT);
 
   yield();
-  mode = 0; //digitalRead(M2_S2);
-
+  
   pixels.begin();
   pixels.setPixelColor(0, pixels.Color(0, 10, 0));
   pixels.show();
@@ -132,8 +133,6 @@ void setup()
   pixels.setPixelColor(0, pixels.Color(100, 0, 0));
   pixels.show();
 
-  const int freq = 2000;
-  const int resolution = 8;
 
   ledcSetup(M1_A_CHANNEL, freq, resolution);
   ledcAttachPin(M1_A_HI, M1_A_CHANNEL);
@@ -226,11 +225,11 @@ void joy_rmt_rc_read_task()
         m1.add(duration);
         m1_last = millis();
       }
-      if (i == 1)
-      {
-        m2.add(duration);
-        m2_last = millis();
-      }
+      //if (i == 1)
+      //{
+      //  m2.add(duration);
+      //  m2_last = millis();
+      //}
     }
   }
 }
@@ -239,7 +238,7 @@ int waitforNeutral()
 {
 
   float m1v = m1.getAverage();
-  float m2v = m2.getAverage();
+  //float m2v = m2.getAverage();
 
   int ok = 0;
   if (m1v > deadzoneMinCH1 && m1v < deadzoneMaxCH1)
@@ -247,17 +246,17 @@ int waitforNeutral()
     Serial.println("Channel 1 neutral");
     ok++;
   }
-  if (m2v > deadzoneMinCH2 && m2v < deadzoneMaxCH2)
-  {
-    Serial.println("Channel 2 neutral");
-    ok++;
-  }
+  //if (m2v > deadzoneMinCH2 && m2v < deadzoneMaxCH2)
+  //{
+  //  Serial.println("Channel 2 neutral");
+  //  ok++;
+  //}
 
   Serial.print("Waiting for channels to be neutral");
-  Serial.print(m1v);
-  Serial.print(" ");
-  Serial.print(m2v);
-  Serial.println(ok);
+  Serial.println(m1v);
+  //Serial.print(" ");
+  //Serial.print(m2v);
+  //Serial.println(ok);
 
   if (ok == 0)
   {
@@ -269,10 +268,10 @@ int waitforNeutral()
     pixels.setPixelColor(0, pixels.Color(100, 25, 25));
     pixels.show();
   }
-  if (ok == 2)
+  if (ok == axis_count)
   {
     pixels.setPixelColor(0, pixels.Color(0, 25, 0));
-    int buzzerDelay = 50+mode*200;
+    int buzzerDelay = 50 + mode * 200;
     digitalWrite(BUZZER, HIGH);
     delay(buzzerDelay);
     digitalWrite(BUZZER, LOW);
@@ -288,31 +287,34 @@ int waitforNeutral()
 
 float handleMotor(int motor, float ratio, int high_channel_a_ledc, int low_pin_a, int high_channel_b_ledc, int low_pin_b)
 {
-  if(nullPassend[motor-1] > millis()){
+  if (nullPassend[motor - 1] > millis())
+  {
     return 0;
   }
 
-  float oldPower = lastPower[motor-1];
-  lastPower[motor-1] = ratio;
+  float oldPower = lastPower[motor - 1];
+  lastPower[motor - 1] = ratio;
   Serial.print(oldPower);
-  Serial.print( " " );
+  Serial.print(" ");
   Serial.println(ratio);
-  if(oldPower <= 0 && ratio > 0){
+  if (oldPower <= 0 && ratio > 0)
+  {
     digitalWrite(low_pin_a, LOW);
     digitalWrite(low_pin_b, LOW);
     ledcWrite(high_channel_a_ledc, 0);
     ledcWrite(high_channel_b_ledc, 0);
     Serial.print("Null pass delay");
-    nullPassend[motor-1] = millis() + NULL_PASS_DELAY;
+    nullPassend[motor - 1] = millis() + NULL_PASS_DELAY;
     return 0;
   }
-  if (oldPower >= 0 && ratio < 0){
+  if (oldPower >= 0 && ratio < 0)
+  {
     digitalWrite(low_pin_a, LOW);
     digitalWrite(low_pin_b, LOW);
     ledcWrite(high_channel_a_ledc, 0);
     ledcWrite(high_channel_b_ledc, 0);
     Serial.println("Null pass delay");
-    nullPassend[motor-1] = millis() + NULL_PASS_DELAY;
+    nullPassend[motor - 1] = millis() + NULL_PASS_DELAY;
     return 0;
   }
 
@@ -337,71 +339,80 @@ float handleMotor(int motor, float ratio, int high_channel_a_ledc, int low_pin_a
   }
 }
 
-uint32_t calculateCurrentSpike(uint32_t current, float powerByte){
-  if(powerByte < 1){
+uint32_t calculateCurrentSpike(uint32_t current, float powerByte)
+{
+  if (powerByte < 5)
+  {
     return 0;
   }
-  return current * 255/powerByte;
+  return current * 255 / powerByte;
 }
 
-void defaultMode(float ch1, float ch2){
+void defaultMode(float ch1)
+{
   float power1 = 0;
   float power2 = 0;
-  if (mode == 0)
-  {
-    power1 = handleMotor(1, ch1, M1_A_CHANNEL, M1_A_LO, M1_B_CHANNEL, M1_B_LO);
-    power2 = handleMotor(2, ch2, M2_A_CHANNEL, M2_A_LO, M2_B_CHANNEL, M2_B_LO);
-  }
-  else if(mode == 1)
-  {
-    float brake = 1-abs(ch2);
-    float brakeFactor = brake * turningMod + (1 - turningMod);
+#if (mode == 0)
+  power1 = handleMotor(1, ch1, M1_A_CHANNEL, M1_A_LO, M1_B_CHANNEL, M1_B_LO);
+  power2 = handleMotor(2, ch1, M2_A_CHANNEL, M2_A_LO, M2_B_CHANNEL, M2_B_LO);
 
-    float left = ch1;
-    float right = ch1;
-    if (ch2 < 0)
-    {
-      left = left * brakeFactor;
-    }
-    else
-    {
-      right = right * brakeFactor;
-    }
-    power1 = handleMotor(1, left, M1_A_CHANNEL, M1_A_LO, M1_B_CHANNEL, M1_B_LO);
-    power2 = handleMotor(2, right, M2_A_CHANNEL, M2_A_LO, M2_B_CHANNEL, M2_B_LO);
-  }
+#elif (mode == 1)
+  float brake = 1 - abs(ch2);
+  float brakeFactor = brake * turningMod + (1 - turningMod);
 
-  uint32_t cur1_ma = analogReadMilliVolts(M1_SENSE)*1000 /50 /SHUNT_MOHM;
-  uint32_t cur2_ma = analogReadMilliVolts(M2_SENSE)*1000 /50 /SHUNT_MOHM;
-  
+  float left = ch1;
+  float right = ch1;
+  if (ch2 < 0)
+  {
+    left = left * brakeFactor;
+  }
+  else
+  {
+    right = right * brakeFactor;
+  }
+  power1 = handleMotor(1, left, M1_A_CHANNEL, M1_A_LO, M1_B_CHANNEL, M1_B_LO);
+  power2 = handleMotor(2, right, M2_A_CHANNEL, M2_A_LO, M2_B_CHANNEL, M2_B_LO);
+#endif
+
+  uint32_t cur1_ma = analogReadMilliVolts(M1_SENSE) * 1000 / 50 / SHUNT_MOHM;
+  uint32_t cur2_ma = analogReadMilliVolts(M2_SENSE) * 1000 / 50 / SHUNT_MOHM;
+
   uint32_t cur1_spike_ma = calculateCurrentSpike(cur1_ma, power1);
   uint32_t cur2_spike_ma = calculateCurrentSpike(cur2_ma, power2);
 
-  if(cur1_ma > MAX_AVG_CURRENT){
+  if (cur1_ma > MAX_AVG_CURRENT)
+  {
     state = STATE_ERROR;
     Serial.print("M1 reached current limit average");
     Serial.println(cur1_ma);
+    Serial.flush();
     return;
   }
 
-  if(cur2_ma > MAX_AVG_CURRENT){
+  if (cur2_ma > MAX_AVG_CURRENT)
+  {
     state = STATE_ERROR;
     Serial.print("M2 reached current limit average");
     Serial.println(cur2_ma);
+    Serial.flush();
     return;
   }
 
-  if(cur1_spike_ma > MAX_SPIKE_CURRENT){
+  if (cur1_spike_ma > MAX_SPIKE_CURRENT)
+  {
     state = STATE_ERROR;
     Serial.print("M1 reached current limit average");
     Serial.println(cur1_spike_ma);
+    Serial.flush();
     return;
   }
 
-  if(cur2_spike_ma > MAX_SPIKE_CURRENT){
+  if (cur2_spike_ma > MAX_SPIKE_CURRENT)
+  {
     state = STATE_ERROR;
     Serial.print("M2 reached current limit average");
     Serial.println(cur2_spike_ma);
+    Serial.flush();
     return;
   }
   pixels.setPixelColor(0, pixels.Color(0, power1, power2));
@@ -420,7 +431,6 @@ void defaultMode(float ch1, float ch2){
   Serial.println();
 }
 
-
 void loop()
 {
   joy_rmt_rc_read_task();
@@ -433,30 +443,37 @@ void loop()
   long curTime = millis();
   if (curTime - m1_last > 200)
   {
+    Serial.println("Missing signal for m1, error");
+    Serial.flush();
     state = STATE_ERROR;
   }
-  if (curTime - m2_last > 200)
-  {
-    state = STATE_ERROR;
-  }
+  //if (curTime - m2_last > 200)
+  //{
+  //  Serial.println("Missing signal for m2, error");
+  //  Serial.flush();
+  //  state = STATE_ERROR;
+  //}
 
   float m1Raw = m1.getAverage();
-  float m2Raw = m2.getAverage();
+  //float m2Raw = m2.getAverage();
 
   float ch1 = 0;
-  float ch2 = 0;
+  //float ch2 = 0;
   if (m1Raw < deadzoneMinCH1 || m1Raw > deadzoneMaxCH1)
   {
     ch1 = mapfloat(m1Raw, minCH1, maxCH1, -1, 1);
     ch1 = constrain(ch1, -1, 1);
   }
-  if (m2Raw < deadzoneMinCH2 || m2Raw > deadzoneMaxCH2)
+  Serial.print("Ch1 raw");
+  Serial.println(m1Raw);
+  //if (m2Raw < deadzoneMinCH2 || m2Raw > deadzoneMaxCH2)
+  //{
+  //  ch2 = mapfloat(m2Raw, minCH2, maxCH2, -1, 1);
+  //  ch2 = constrain(ch2, -1, 1);
+  //}
+
+  if (state == STATE_ERROR)
   {
-    ch2 = mapfloat(m2Raw, minCH2, maxCH2, -1, 1);
-    ch2 = constrain(ch2, -1, 1);
-  }
-  
-  if(state == STATE_ERROR){
     handleMotor(1, 0, M1_A_CHANNEL, M1_A_LO, M1_B_CHANNEL, M1_B_LO);
     handleMotor(2, 0, M2_A_CHANNEL, M2_A_LO, M2_B_CHANNEL, M2_B_LO);
     digitalWrite(BUZZER, HIGH);
@@ -465,8 +482,9 @@ void loop()
 
     delay(100);
   }
-  if(state == STATE_DEFAULT){
-    defaultMode(ch1, ch2);
+  if (state == STATE_DEFAULT)
+  {
+    defaultMode(ch1);
   }
   pixels.show();
 }
