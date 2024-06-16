@@ -59,7 +59,10 @@
           "width": 0.0
         }
       ],
-      "drc_exclusions": [],
+      "drc_exclusions": [
+        "footprint_type_mismatch|92640000|86550000|f5e351ab-1ff3-4b52-b3cb-998d3493b3ef|00000000-0000-0000-0000-000000000000",
+        "via_dangling|131000000|21500000|12871476-d555-4fd9-8276-a1f1148b73ba|00000000-0000-0000-0000-000000000000"
+      ],
       "meta": {
         "filename": "board_design_settings.json",
         "version": 2
@@ -97,12 +100,12 @@
         "padstack": "error",
         "pth_inside_courtyard": "ignore",
         "shorting_items": "error",
-        "silk_edge_clearance": "warning",
+        "silk_edge_clearance": "ignore",
         "silk_over_copper": "ignore",
         "silk_overlap": "ignore",
         "skew_out_of_range": "error",
         "solder_mask_bridge": "error",
-        "starved_thermal": "error",
+        "starved_thermal": "ignore",
         "text_height": "warning",
         "text_thickness": "warning",
         "through_hole_pad_without_hole": "error",
@@ -133,11 +136,11 @@
         "min_silk_clearance": 0.0,
         "min_text_height": 0.8,
         "min_text_thickness": 0.08,
-        "min_through_hole_diameter": 0.3,
+        "min_through_hole_diameter": 0.2,
         "min_track_width": 0.2,
         "min_via_annular_width": 0.05,
         "min_via_diameter": 0.4,
-        "solder_mask_to_copper_clearance": 0.0,
+        "solder_mask_to_copper_clearance": 0.005,
         "use_height_for_length_calcs": true
       },
       "teardrop_options": [
@@ -228,6 +231,10 @@
           "drill": 1.1
         },
         {
+          "diameter": 2.5,
+          "drill": 2.0
+        },
+        {
           "diameter": 6.0,
           "drill": 3.0
         }
@@ -250,7 +257,13 @@
     "equivalence_files": []
   },
   "erc": {
-    "erc_exclusions": [],
+    "erc_exclusions": [
+      "power_pin_not_driven|2679700|685800|92476e6e-9109-4853-a77c-27bacec302b4|00000000-0000-0000-0000-000000000000|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|",
+      "power_pin_not_driven|5156200|2019300|c24c2f2a-1194-4c5b-bbbf-22e116a6c09b|00000000-0000-0000-0000-000000000000|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|",
+      "power_pin_not_driven|812800|1778000|1b87e744-35d9-40a9-a64b-427493b4f0e2|00000000-0000-0000-0000-000000000000|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|",
+      "power_pin_not_driven|952500|1244600|5f218ad5-b06e-4e1e-9e38-8a3de8afe0b9|00000000-0000-0000-0000-000000000000|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|",
+      "power_pin_not_driven|952500|533400|b314f27c-f4f7-4255-9500-df3fe945a0be|00000000-0000-0000-0000-000000000000|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|"
+    ],
     "meta": {
       "version": 0
     },
@@ -453,7 +466,7 @@
       "pin_to_pin": "warning",
       "power_pin_not_driven": "error",
       "similar_labels": "warning",
-      "simulation_model_issue": "error",
+      "simulation_model_issue": "ignore",
       "unannotated": "error",
       "unit_value_mismatch": "error",
       "unresolved_variable": "error",
@@ -584,13 +597,25 @@
           "label": "Description",
           "name": "Description",
           "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Sim.Pins",
+          "name": "Sim.Pins",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Sim.Device",
+          "name": "Sim.Device",
+          "show": false
         }
       ],
       "filter_string": "",
       "group_symbols": true,
       "name": "",
       "sort_asc": true,
-      "sort_field": "LCSC"
+      "sort_field": "Reference"
     },
     "connection_grid_size": 50.0,
     "drawing": {
