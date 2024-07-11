@@ -84,6 +84,7 @@
         "footprint_type_mismatch": "error",
         "hole_clearance": "error",
         "hole_near_hole": "error",
+        "holes_co_located": "warning",
         "invalid_outline": "error",
         "isolated_copper": "warning",
         "item_on_disabled_layer": "error",
@@ -257,13 +258,7 @@
     "equivalence_files": []
   },
   "erc": {
-    "erc_exclusions": [
-      "power_pin_not_driven|2679700|685800|92476e6e-9109-4853-a77c-27bacec302b4|00000000-0000-0000-0000-000000000000|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|",
-      "power_pin_not_driven|5156200|2019300|c24c2f2a-1194-4c5b-bbbf-22e116a6c09b|00000000-0000-0000-0000-000000000000|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|",
-      "power_pin_not_driven|812800|1778000|1b87e744-35d9-40a9-a64b-427493b4f0e2|00000000-0000-0000-0000-000000000000|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|",
-      "power_pin_not_driven|952500|1244600|5f218ad5-b06e-4e1e-9e38-8a3de8afe0b9|00000000-0000-0000-0000-000000000000|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|",
-      "power_pin_not_driven|952500|533400|b314f27c-f4f7-4255-9500-df3fe945a0be|00000000-0000-0000-0000-000000000000|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|/37f31dec-63fc-4634-a141-5dc5d2b60fe4|"
-    ],
+    "erc_exclusions": [],
     "meta": {
       "version": 0
     },
@@ -524,6 +519,7 @@
   },
   "schematic": {
     "annotate_start_num": 0,
+    "bom_export_filename": "",
     "bom_fmt_presets": [],
     "bom_fmt_settings": {
       "field_delimiter": ",",
