@@ -9,7 +9,7 @@
 #define LED_STATUS 32
 #define ONE_WIRE_BUS 35
 
-#define M1_SENSE 34
+#define M1_SENSE 4
 
 #define IN1 14
 #define IN2 12
@@ -24,7 +24,7 @@
 
 // Configuration
 #define SHUNT_MOHM 2
-#define MAX_AVG_CURRENT 30000
+#define MAX_AVG_CURRENT 15000
 #define MAX_SPIKE_CURRENT 60000
 #define NULL_PASS_DELAY 50
 
@@ -65,7 +65,7 @@ float nullPass;
 const int M1_A_CHANNEL = 0;
 const int M1_B_CHANNEL = 1;
 
-RunningMedian m1 = RunningMedian(50);
+RunningMedian m1 = RunningMedian(10);
 long m1_last = 0;
   int state = STATE_WAIT_NEUTRAL;
 
@@ -194,7 +194,7 @@ void joy_rmt_rc_read_task()
   }
 }
 
-int waitforNeutral(float tempC)
+bool waitforNeutral(float tempC)
 {
 
   float m1v = m1.getAverage();
@@ -216,7 +216,7 @@ int waitforNeutral(float tempC)
     pixels.setPixelColor(0, pixels.Color(0, 0, 200));
     pixels.show();
     delay(100);
-    return STATE_DEFAULT;   
+    return true;   
   }
 
   if (!tempReady){
@@ -229,7 +229,7 @@ int waitforNeutral(float tempC)
   }
       
   pixels.show();
-  return STATE_WAIT_NEUTRAL;  
+  return false;  
 }
 
 float handleMotor(float ratio, int high_channel_a_ledc, int low_pin_a, int high_channel_b_ledc, int low_pin_b)
@@ -320,8 +320,8 @@ void defaultMode(float ch1)
   power2 = handleMotor(2, right, M2_A_CHANNEL, M2_A_LO, M2_B_CHANNEL, M2_B_LO);
 #endif
 
-  uint32_t cur1_ma = analogReadMilliVolts(M1_SENSE) * 1000 / 50 / SHUNT_MOHM;
-
+  uint32_t raw_cur =    (M1_SENSE);
+  uint32_t cur1_ma = raw_cur * 1000 / 50 / SHUNT_MOHM;
   uint32_t cur1_spike_ma = calculateCurrentSpike(cur1_ma, power1);
 
   if (cur1_ma > MAX_AVG_CURRENT)
@@ -336,7 +336,7 @@ void defaultMode(float ch1)
   if (cur1_spike_ma > MAX_SPIKE_CURRENT)
   {
     state = STATE_ERROR;
-    Serial.print("M1 reached current limit average");
+    Serial.print("M1 reached current limit spike");
     Serial.println(cur1_spike_ma);
     Serial.flush();
     return;
@@ -353,18 +353,24 @@ void defaultMode(float ch1)
 
 void loop()
 {
+
   joy_rmt_rc_read_task();
   float tempC = 30;
 
   if (state == STATE_WAIT_NEUTRAL || state == STATE_ERROR)
   {
-    state = waitforNeutral(tempC);
+    if (state == STATE_ERROR) {
+      handleMotor(0, M1_A_CHANNEL, M1_A_LO, M1_B_CHANNEL, M1_B_LO);
+      pixels.setPixelColor(0, pixels.Color(255, 0, 0, 10));
+      pixels.show();
+    }
+    if (waitforNeutral(tempC)){
+      state = STATE_DEFAULT;
+    }
     return;
   }
 
   long curTime = millis();
-  //here
-  m1_last = curTime;
   if (curTime - m1_last > 200)
   {
     Serial.println("Missing signal for m1, error");
@@ -384,22 +390,6 @@ void loop()
   {
     ch1 = mapfloat(m1Raw, minCH1, maxCH1, -1, 1);
     ch1 = constrain(ch1, -1, 1);
-  }
-  Serial.print("Ch1 raw");
-  Serial.println(m1Raw);
-
-
-  if (state == STATE_ERROR)
-  {
-    handleMotor(0, M1_A_CHANNEL, M1_A_LO, M1_B_CHANNEL, M1_B_LO);
-
-    pixels.setPixelColor(0, pixels.Color(255, 0, 0, 255));
-    pixels.show();
-    delay(100);
-    pixels.setPixelColor(0, pixels.Color(255, 0, 0, 255));
-    pixels.show();
-    delay(100);
-    yield();
   }
   if (state == STATE_DEFAULT)
   {
