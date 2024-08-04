@@ -36606,6 +36606,32 @@
 			(justify left bottom)
 		)
 	)
+	(gr_text "VIN\n"
+		(at 115.25 106.7 0)
+		(layer "F.SilkS")
+		(uuid "98ed877d-412d-4a00-bd76-0fb759d4a94d")
+		(effects
+			(font
+				(size 5 5)
+				(thickness 0.4)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "Motor"
+		(at 124.25 30.2 90)
+		(layer "F.SilkS")
+		(uuid "c8dc5e37-15b5-499a-926d-67c0ad170564")
+		(effects
+			(font
+				(size 2.5 2.5)
+				(thickness 0.4)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
 	(gr_text "3v3 Buck"
 		(at 74.93 105.32 0)
 		(layer "F.SilkS")

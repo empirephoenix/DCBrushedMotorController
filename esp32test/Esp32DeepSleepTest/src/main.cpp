@@ -72,10 +72,6 @@ long m1_last = 0;
 // Configure RMT peripheral for each RC channel
 RingbufHandle_t ringbuffers[axis_count];
 
-OneWire oneWire(ONE_WIRE_BUS);
-DallasTemperature sensors(&oneWire);
-
-
 void check(bool value, char *output)
 {
   if (value)
@@ -96,8 +92,7 @@ void setup()
   pinMode(M1_A_HI, OUTPUT);
   pinMode(M1_B_LO, OUTPUT);
   pinMode(M1_B_HI, OUTPUT);
-  
-  sensors.begin();
+ 
   yield();
   
   pixels.begin();
@@ -206,7 +201,7 @@ int waitforNeutral(float tempC)
 
   int ok = 0;
   boolean neutral = m1v > deadzoneMinCH1 && m1v < deadzoneMaxCH1;
-  boolean tempReady = ok == 1 && tempC < minTEMPC || tempC > maxTEMPC;
+  boolean tempReady = ok == 1 && tempC > minTEMPC || tempC < maxTEMPC;
 
   Serial.print("Channel is at ");
   Serial.print(m1v);
@@ -218,14 +213,15 @@ int waitforNeutral(float tempC)
   if (neutral && tempReady)
   {
     Serial.print("Precheck ok");
-    pixels.setPixelColor(0, pixels.Color(100, 100, 100));
+    pixels.setPixelColor(0, pixels.Color(0, 0, 200));
     pixels.show();
+    delay(100);
     return STATE_DEFAULT;   
   }
 
   if (!tempReady){
     Serial.print("Invalid Temperature");
-    pixels.setPixelColor(0, pixels.Color(100, 100, 100));
+    pixels.setPixelColor(0, pixels.Color(50, 50, 50));
   }
   if (!neutral) {
     Serial.print("Not neutral");
@@ -271,7 +267,7 @@ float handleMotor(float ratio, int high_channel_a_ledc, int low_pin_a, int high_
 
   if (ratio > 0)
   {
-    int forward = mapfloat(ratio, 0, 1, 0, 254);
+    int forward = mapfloat(ratio, 0, 1, 0, 255);
     digitalWrite(low_pin_a, LOW);
     digitalWrite(low_pin_b, HIGH);
     ledcWrite(high_channel_a_ledc, forward);
@@ -281,7 +277,7 @@ float handleMotor(float ratio, int high_channel_a_ledc, int low_pin_a, int high_
   }
   else
   {
-    int reverse = mapfloat(ratio, -1, 0, 254, 0);
+    int reverse = mapfloat(ratio, -1, 0, 255, 0);
     digitalWrite(low_pin_a, HIGH);
     digitalWrite(low_pin_b, LOW);
     ledcWrite(high_channel_a_ledc, 0);
@@ -357,9 +353,8 @@ void defaultMode(float ch1)
 
 void loop()
 {
-  sensors.requestTemperatures();
   joy_rmt_rc_read_task();
-  float tempC = sensors.getTempCByIndex(0);
+  float tempC = 30;
 
   if (state == STATE_WAIT_NEUTRAL || state == STATE_ERROR)
   {
